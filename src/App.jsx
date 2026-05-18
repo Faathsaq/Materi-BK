@@ -4,10 +4,10 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import imgBg1998 from "./assets/bg1998.jpg";
 import imgBgKomnas from "./assets/bgng1998.jpg";
-import splash1 from "./assets/splash1.jpg";
+import splash1 from "./assets/splash1.jpeg";
 import splash2 from "./assets/splash2.jpg";
 import splash3 from "./assets/splash3.jpg";
-import hero from "./assets/hero.jpg";
+import hero from "./assets/hero.jpeg";
 import bgMusic from "./assets/music.mp3";
 import vinylImg from "./assets/World_Records_Vinyl-10.jpg";
 
