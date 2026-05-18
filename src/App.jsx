@@ -76,7 +76,7 @@ function useWindowWidth() {
   return w;
 }
 
-/* ════════════ MUSIC PLAYER ════════════ */
+
 function MusicPlayer() {
   const audioRef = useRef(null);
   const canvasRef = useRef(null);
@@ -89,7 +89,7 @@ function MusicPlayer() {
 
   useEffect(() => {
     const img = new Image();
-    img.src = "/src/assets/World_Records_Vinyl-10.jpg"; // sesuaikan path
+    img.src = "/src/assets/World_Records_Vinyl-10.jpg"; 
     img.onload = () => { imgRef.current = img; setImgLoaded(true); };
   }, []);
 
@@ -222,7 +222,6 @@ function drawVinyl(angle, prog) {
     const dist = Math.sqrt(dx * dx + dy * dy);
     const audio = audioRef.current;
 
-    // klik ring luar → seek
     if (dist > 68 && dist < 82) {
       const angle = Math.atan2(dy, dx) + Math.PI / 2;
       const norm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
@@ -230,12 +229,33 @@ function drawVinyl(angle, prog) {
       return;
     }
 
-    // klik piringan → play/pause
     if (dist <= 68) {
       if (playing) { audio.pause(); setPlaying(false); }
       else { audio.play(); setPlaying(true); }
     }
   };
+  const [started, setStarted] = useState(false);
+
+if (!started) return (
+  <motion.div
+    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+    transition={{ delay: 1.5 }}
+    onClick={() => {
+      setStarted(true);
+      audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
+    }}
+    style={{ position: "fixed", bottom: "1.5rem", left: "1.5rem", zIndex: 150,
+      width: "160px", height: "160px", borderRadius: "50%",
+      background: "rgba(22,19,16,0.85)", border: "1px solid rgba(200,151,42,.4)",
+      display: "flex", flexDirection: "column", alignItems: "center", 
+      justifyContent: "center", cursor: "pointer",
+      WebkitTapHighlightColor: "transparent" }}>
+    <audio ref={audioRef} src={bgMusic} loop preload="auto" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#C8972A"><polygon points="5,3 19,12 5,21"/></svg>
+    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "9px", 
+      color: "#C8972A", letterSpacing: "2px", marginTop: "6px" }}>TAP TO PLAY</span>
+  </motion.div>
+);
 
   return (
     <motion.div
@@ -247,7 +267,7 @@ function drawVinyl(angle, prog) {
       <audio ref={audioRef} src={bgMusic} loop preload="auto" />
       <div
         onClick={togglePlay}
-        style={{ position: "relative", width: "140px", height: "140px", cursor: "pointer" }}
+        style={{ position: "relative", width: "140px", height: "140px", cursor: "pointer",  WebkitTapHighlightColor: "transparent" }}
       >
 <canvas
   ref={canvasRef}
