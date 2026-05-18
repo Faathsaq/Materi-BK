@@ -26,9 +26,7 @@ globalStyle.textContent = `
 
   @media (max-width:640px) { .nav-links-desktop{display:none!important} .hamburger-btn{display:flex!important} }
   @media (min-width:641px) { .hamburger-btn{display:none!important} }
-  @media (max-width:768px) {
-    .img-grid{grid-template-columns:1fr!important}
-  }
+  @media (max-width:768px) { .img-grid{grid-template-columns:1fr!important} }
   @media (max-width:480px) {
     .data-grid{grid-template-columns:1fr 1fr!important}
     .anggota-flex{flex-direction:column!important;align-items:stretch!important}
@@ -61,6 +59,79 @@ globalStyle.textContent = `
     50%     { text-shadow:0 0 20px rgba(200,151,42,.6),0 0 40px rgba(200,151,42,.3); }
   }
   .glow-done { animation:glowPulse 1.2s ease-in-out 2; }
+
+  .with-grid { position:relative; }
+  .with-grid::before {
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(200,151,42,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,151,42,.04) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none; z-index:0;
+  }
+  .with-grid > * { position:relative; z-index:1; }
+
+  .with-grid-dense::before {
+    background-image:
+      linear-gradient(rgba(200,151,42,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,151,42,.05) 1px, transparent 1px),
+      radial-gradient(circle, rgba(200,151,42,.2) 1px, transparent 1px);
+    background-size:32px 32px, 32px 32px, 32px 32px;
+    background-position:0 0, 0 0, -1px -1px;
+  }
+
+  .with-stripe { position:relative; }
+  .with-stripe::after {
+    content:'';
+    position:absolute; inset:0;
+    background-image:repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 24px,
+      rgba(200,151,42,.015) 24px,
+      rgba(200,151,42,.015) 25px
+    );
+    pointer-events:none; z-index:0;
+  }
+  .with-stripe > * { position:relative; z-index:1; }
+
+  .section-ornament {
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:clamp(1.2rem,3vw,2rem);
+  }
+  .section-ornament::before, .section-ornament::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(200,151,42,.4), transparent);
+  }
+  .section-ornament span {
+    font-family:'DM Sans',sans-serif;
+    font-size:9px; letter-spacing:4px;
+    text-transform:uppercase; color:#C8972A;
+    font-weight:700; white-space:nowrap;
+  }
+
+  .bracket-box {
+    position:relative;
+    padding:clamp(1rem,3vw,1.4rem) clamp(1rem,3vw,1.4rem) clamp(1rem,3vw,1.4rem) clamp(1rem,3vw,1.4rem);
+  }
+  .bracket-box::before, .bracket-box::after {
+    content:''; position:absolute;
+    width:16px; height:16px;
+    border-color:rgba(200,151,42,.4); border-style:solid;
+  }
+  .bracket-box::before { top:0; left:0; border-width:1.5px 0 0 1.5px; }
+  .bracket-box::after  { bottom:0; right:0; border-width:0 1.5px 1.5px 0; }
+
+  .challenge-num {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(3rem,8vw,5rem);
+    color:rgba(200,151,42,.06);
+    line-height:1;
+    position:absolute; top:8px; right:16px;
+    letter-spacing:4px;
+    pointer-events:none; user-select:none;
+  }
 `;
 document.head.appendChild(globalStyle);
 
@@ -76,7 +147,7 @@ function useWindowWidth() {
   return w;
 }
 
-
+/* ════════════ MUSIC PLAYER ════════════ */
 function MusicPlayer() {
   const audioRef = useRef(null);
   const canvasRef = useRef(null);
@@ -86,14 +157,15 @@ function MusicPlayer() {
   const imgRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     const img = new Image();
-    img.src = "/src/assets/World_Records_Vinyl-10.jpg"; 
+    img.src = vinylImg;
     img.onload = () => { imgRef.current = img; setImgLoaded(true); };
   }, []);
 
-function drawVinyl(angle, prog) {
+  function drawVinyl(angle, prog) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -104,7 +176,6 @@ function drawVinyl(angle, prog) {
     ctx.save();
     ctx.translate(vx, vy);
     ctx.rotate(angle);
-
     ctx.beginPath(); ctx.arc(0, 0, vr, 0, Math.PI * 2); ctx.clip();
 
     if (imgRef.current) {
@@ -124,7 +195,6 @@ function drawVinyl(angle, prog) {
         ctx.lineWidth = 0.9; ctx.stroke();
       }
     }
-
     ctx.restore();
 
     ctx.beginPath(); ctx.arc(vx, vy, vr, 0, Math.PI * 2);
@@ -214,66 +284,65 @@ function drawVinyl(angle, prog) {
   const togglePlay = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = 200 / rect.width;
-    const scaleY = 200 / rect.height;
+    const scaleX = 240 / rect.width;
+    const scaleY = 240 / rect.height;
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
-    const dx = mx - 72, dy = my - 100;
+    const dx = mx - 85, dy = my - 115;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const audio = audioRef.current;
 
-    if (dist > 68 && dist < 82) {
+    if (dist >= 68 && dist <= 84) {
       const angle = Math.atan2(dy, dx) + Math.PI / 2;
       const norm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
       if (audio?.duration) audio.currentTime = (norm / (Math.PI * 2)) * audio.duration;
       return;
     }
-
     if (dist <= 68) {
       if (playing) { audio.pause(); setPlaying(false); }
       else { audio.play(); setPlaying(true); }
     }
   };
-  const [started, setStarted] = useState(false);
 
-if (!started) return (
-  <motion.div
-    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-    transition={{ delay: 1.5 }}
-    onClick={() => {
-      setStarted(true);
-      audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
-    }}
-    style={{ position: "fixed", bottom: "1.5rem", left: "1.5rem", zIndex: 150,
-      width: "160px", height: "160px", borderRadius: "50%",
-      background: "rgba(22,19,16,0.85)", border: "1px solid rgba(200,151,42,.4)",
-      display: "flex", flexDirection: "column", alignItems: "center", 
-      justifyContent: "center", cursor: "pointer",
-      WebkitTapHighlightColor: "transparent" }}>
-    <audio ref={audioRef} src={bgMusic} loop preload="auto" />
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="#C8972A"><polygon points="5,3 19,12 5,21"/></svg>
-    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "9px", 
-      color: "#C8972A", letterSpacing: "2px", marginTop: "6px" }}>TAP TO PLAY</span>
-  </motion.div>
-);
+  if (!started) return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      transition={{ delay: 1.5 }}
+      onClick={() => {
+        setStarted(true);
+        audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
+      }}
+      style={{
+        position: "fixed", bottom: "1.5rem", left: "1.5rem", zIndex: 150,
+        width: "72px", height: "72px", borderRadius: "50%",
+        background: "rgba(22,19,16,0.92)", border: "1px solid rgba(200,151,42,.4)",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", cursor: "pointer",
+        WebkitTapHighlightColor: "transparent"
+      }}>
+      <audio ref={audioRef} src={bgMusic} loop preload="auto" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#C8972A"><polygon points="5,3 19,12 5,21"/></svg>
+      <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "8px", color: "#C8972A", letterSpacing: "1px", marginTop: "4px" }}>TAP</span>
+    </motion.div>
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 1.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       style={{ position: "fixed", bottom: "1.5rem", left: "1.5rem", zIndex: 150 }}
     >
       <audio ref={audioRef} src={bgMusic} loop preload="auto" />
       <div
         onClick={togglePlay}
-        style={{ position: "relative", width: "140px", height: "140px", cursor: "pointer",  WebkitTapHighlightColor: "transparent" }}
+        style={{
+          position: "relative", width: "160px", height: "160px",
+          cursor: "pointer", WebkitTapHighlightColor: "transparent", userSelect: "none"
+        }}
       >
-<canvas
-  ref={canvasRef}
-  width={240} height={240}
-  style={{ width: "160px", height: "160px", display: "block" }}
-/>
+        <canvas ref={canvasRef} width={240} height={240}
+          style={{ width: "160px", height: "160px", display: "block" }} />
       </div>
     </motion.div>
   );
@@ -442,10 +511,10 @@ function AnggotaCard({ name, num, index }) {
 function Anggota() {
   const members = [["Annisa Rahmawati", "— 07"], ["Najwa Niswatul Umma", "— 24"], ["Reina Faizah Salsabilla", "— 29"]];
   return (
-    <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.3 }}
+    <motion.section className="with-grid" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.3 }}
       style={{ padding: "clamp(2rem,5vw,3.5rem) clamp(1rem,4vw,1.5rem)", background: "#161310", borderTop: "1px solid rgba(200,151,42,.2)", borderBottom: "1px solid rgba(200,151,42,.2)" }}>
       <div style={{ maxWidth: "960px", margin: "0 auto", textAlign: "center" }}>
-        <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "9px", letterSpacing: "4px", textTransform: "uppercase", color: "#5C5040", marginBottom: "1.2rem", fontWeight: 700 }}>Anggota Kelompok</p>
+        <div className="section-ornament"><span>Anggota Kelompok</span></div>
         <div style={{ display: "flex", gap: ".75rem", justifyContent: "center", flexWrap: "wrap", marginTop: "1.2rem" }}>
           {members.map(([name, num], i) => <AnggotaCard key={i} name={name} num={num} index={i} />)}
         </div>
@@ -463,7 +532,7 @@ function ImageSection({ id, title, imgSrc, imgAlt, children, reverse = false, bg
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const imgY = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
   return (
-    <section id={id} ref={ref} style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: bg, borderBottom: "1px solid rgba(200,151,42,.15)" }}>
+    <section id={id} ref={ref} className="with-grid" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: bg, borderBottom: "1px solid rgba(200,151,42,.15)" }}>
       <div className="img-grid" style={{ maxWidth: "960px", margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? "1.5rem" : "3rem", alignItems: "center" }}>
         <motion.div
           initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
@@ -635,8 +704,10 @@ export default function App() {
               more={["Aparat keamanan yang seharusnya melindungi justru absen atau terlibat. Kerusuhan menewaskan lebih dari 1.000 orang dan membakar ratusan bangunan."]}
             />
           </ImageSection>
-          <section id="data" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#0D0B09", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
+
+          <section id="data" className="with-grid with-grid-dense" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#0D0B09", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
             <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+              <div className="section-ornament"><span>Data & Fakta</span></div>
               <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7 }}
                 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(1.6rem,3.5vw,2.6rem)", fontWeight: 400, color: "#E2B860", marginBottom: "clamp(1.2rem,3vw,2rem)", letterSpacing: "2px" }}>
                 Data &amp; Fakta Penting
@@ -649,8 +720,10 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section id="timeline" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#161310", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
+
+          <section id="timeline" className="with-grid with-stripe" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#161310", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
             <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+              <div className="section-ornament"><span>Kronologi</span></div>
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "clamp(1.5rem,4vw,2.5rem)" }}>
                 <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(1.6rem,3.5vw,2.6rem)", fontWeight: 400, color: "#E2B860", marginBottom: ".5rem", letterSpacing: "2px" }}>Lini Masa Peristiwa</h2>
                 <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "clamp(.65rem,1.5vw,.78rem)", fontWeight: 500, color: "#5C5040", letterSpacing: "1.5px", textTransform: "uppercase" }}>Klik setiap peristiwa untuk membaca detail</p>
@@ -661,8 +734,10 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section id="tantangan" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#0D0B09", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
+
+          <section id="tantangan" className="with-grid" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "#0D0B09", borderBottom: "1px solid rgba(200,151,42,.15)" }}>
             <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+              <div className="section-ornament"><span>Tantangan</span></div>
               <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .7 }}
                 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(1.6rem,3.5vw,2.6rem)", fontWeight: 400, color: "#E2B860", marginBottom: "clamp(1.2rem,3vw,2rem)", letterSpacing: "2px" }}>
                 Tantangan Struktural yang Tersisa
@@ -670,13 +745,14 @@ export default function App() {
               <div style={{ display: "grid", gap: ".85rem" }}>
                 {CHALLENGES.map((c, i) => (
                   <motion.div key={i}
+                    className="bracket-box"
                     initial={{ opacity: 0, x: -40, scale: 0.97 }}
                     whileInView={{ opacity: 1, x: 0, scale: 1 }}
                     viewport={{ once: true, amount: .12 }}
                     transition={{ delay: i * .12, duration: .65, ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ x: 8, borderColor: "rgba(200,151,42,.45)", background: "#261E14" }}
-                    style={{ background: "#1F1A14", border: "1px solid rgba(200,151,42,.2)", borderRadius: "10px", padding: "clamp(1rem,3vw,1.4rem)", transition: "background .3s,border-color .3s" }}>
-                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(1.8rem,5vw,2.8rem)", fontWeight: 400, color: "rgba(200,151,42,.12)", lineHeight: 1, marginBottom: ".3rem", letterSpacing: "3px" }}>{c.num}</div>
+                    style={{ background: "#1F1A14", border: "1px solid rgba(200,151,42,.2)", borderRadius: "10px", transition: "background .3s,border-color .3s", overflow: "hidden" }}>
+                    <span className="challenge-num">{c.num}</span>
                     <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(.95rem,2.5vw,1.25rem)", color: "#E2B860", marginBottom: ".5rem", letterSpacing: "1.5px" }}>{c.title}</div>
                     <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: "clamp(.83rem,2vw,.95rem)", fontWeight: 400, color: "#9A8A72", lineHeight: 1.85, margin: 0 }}>{c.desc}</p>
                   </motion.div>
@@ -684,8 +760,10 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section id="refleksi" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "linear-gradient(180deg,#0D0B09 0%,#180d0d 100%)" }}>
+
+          <section id="refleksi" className="with-grid" style={{ padding: "clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)", background: "linear-gradient(180deg,#0D0B09 0%,#180d0d 100%)" }}>
             <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+              <div className="section-ornament"><span>Refleksi & Seruan</span></div>
               <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .9, ease: [0.16, 1, 0.3, 1] }}
                 style={{ background: "linear-gradient(135deg,rgba(139,46,46,.15),rgba(200,151,42,.08))", border: "1px solid rgba(139,46,46,.4)", borderRadius: "14px", padding: "clamp(1.5rem,4vw,2.5rem)" }}>
                 <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(1.5rem,3.5vw,2rem)", color: "#F5EDD8", marginBottom: "1.2rem", letterSpacing: "2px" }}>Refleksi &amp; Seruan</h2>
@@ -703,13 +781,13 @@ export default function App() {
               </motion.div>
             </div>
           </section>
+
           <footer style={{ background: "#161310", borderTop: "1px solid rgba(200,151,42,.2)", padding: "clamp(1.5rem,3vw,2rem) clamp(1rem,4vw,1.5rem)", textAlign: "center" }}>
             <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: "clamp(.68rem,1.5vw,.78rem)", fontWeight: 500, color: "#5C5040", lineHeight: 1.8 }}>
               2026 — Dibuat untuk keperluan edukasi.<br />
               <span style={{ color: "#C8972A" }}>Semua data bersumber dari laporan resmi Komnas Perempuan, TGPF, dan dokumen DPR RI.</span>
             </p>
           </footer>
-          {/* Music player floating */}
           <MusicPlayer />
         </>
       )}
